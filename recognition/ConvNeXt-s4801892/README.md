@@ -12,10 +12,14 @@ The readme file should contain:
 – Resource profiling table documenting computational efficiency (peak GPU VRAM, parameter count, and inference runtime/latency).
 – In-depth qualitative error autopsies analyzing 3–5 representative failure cases from the dataset (diagnosing root triggers and failure modes).
 – Actionable engineering recommendation and trade-off synthesis for your project manager.
+
 • The mandatory Artificial Intelligence Usage Disclosure subsection - documenting:
 • Which AI tools were utilized (e.g., GitHub Copilot for auto-complete, ChatGPT/Claude for debugging syntax, Gemini for concept lookup).
 • What specific tasks AI assisted with (e.g., scaffolding data loading functions, refactoring plotting scripts).
 • How you audited, verified, and empirically tested the AI-suggested code
+ChatGPT was used for helping scaffold the data loading functions. I verified the accuracy by verifying that there was no data leakage (see screenshot below).
+![alt text](image.png)
+
 
 Marking Criteria:
 1. Description and explanation of the working principles of the algorithm implemented and the problem it solves (5 Marks).
