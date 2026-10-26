@@ -1,6 +1,7 @@
 # Contains source code for training, validating, testing, and saving model. model imported from modules.py, data loader imported from dataset.py. plot losses & metrics during training
 import time
 from pathlib import Path
+import json
 
 import numpy as np
 import torch
@@ -10,7 +11,7 @@ import torch.optim as optim
 import modules
 import dataset
 
-EPOCHS = 20
+EPOCHS = 30
 LEARNING_RATE = 0.001
 WEIGHT_DECAY = 0.0001
 NUM_CLASSES = 2
@@ -20,7 +21,7 @@ class_names = ["AD", "CN"]
 OUTPUT_DIR = Path("outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-CHECKPOINT_PATH = OUTPUT_DIR / "basic_cnn_ad_cn.pth"
+CHECKPOINT_PATH = OUTPUT_DIR / "basic_cnn.pth"
 METRICS_PATH = OUTPUT_DIR / "metrics.json"
 HISTORY_PATH = OUTPUT_DIR / "training_history.json"
 
@@ -289,6 +290,52 @@ print(f"Test loss: {test_results['loss']:.4f}")
 print(f"Test accuracy: {test_results['accuracy']:.4f}")
 print(f"Results directory: {OUTPUT_DIR.resolve()}")
 
-print("\nGenerated files:")
-for path in sorted(OUTPUT_DIR.iterdir()):
-    print(" -", path.name)
+# save baseline model
+checkpoint = {
+    "model_name": "BasicCNN",
+    "model_state_dict": model.state_dict(),
+    "optimizer_state_dict": optimiser.state_dict(),
+    "num_classes": NUM_CLASSES,
+    "class_names": class_names,
+    "epoch": EPOCHS,
+    "parameter_count": parameter_count,
+    "trainable_parameter_count": trainable_parameter_count,
+    "history": history,
+    "test_loss": test_results["loss"],
+    "test_accuracy": test_results["accuracy"],
+    "training_seconds": training_seconds,
+    "test_seconds": test_seconds,
+    "peak_gpu_allocated_mib": peak_allocated_mib,
+    "peak_gpu_reserved_mib": peak_reserved_mib,
+}
+torch.save(checkpoint, CHECKPOINT_PATH)
+print(f"\nModel checkpoint saved to: {CHECKPOINT_PATH}")
+
+metrics = {
+    "model_name": "BasicCNN",
+    "device": str(device),
+    "epochs": EPOCHS,
+    "parameter_count": parameter_count,
+    "trainable_parameter_count": trainable_parameter_count,
+    "class_names": class_names,
+    "training_seconds": training_seconds,
+    "test_seconds": test_seconds,
+    "total_train_seconds": sum(history["train_epoch_seconds"]),
+    "total_validation_seconds": sum(history["val_epoch_seconds"]),
+    "peak_gpu_allocated_mib": peak_allocated_mib,
+    "peak_gpu_reserved_mib": peak_reserved_mib,
+    "test_loss": test_results["loss"],
+    "test_accuracy": test_results["accuracy"],
+    "test_samples": test_results["total"],
+    "test_confusion_matrix": confusion.tolist(),
+    "test_per_class_metrics": per_class_metrics,
+}
+
+with open(METRICS_PATH, "w", encoding="utf-8") as f:
+    json.dump(metrics, f, indent=4)
+
+with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+    json.dump(history, f, indent=4)
+
+print(f"Metrics saved to: {METRICS_PATH}")
+print(f"Training history saved to: {HISTORY_PATH}")
