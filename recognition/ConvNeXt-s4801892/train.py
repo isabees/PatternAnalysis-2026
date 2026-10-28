@@ -11,8 +11,11 @@ import torch.optim as optim
 import modules
 import dataset
 
+MODEL_NAME = "BasicCNN"
+# MODEL_NAME = "ConvNeXt"
+
 EPOCHS = 30
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 WEIGHT_DECAY = 0.0001
 NUM_CLASSES = 2
 LABEL_CLASSES = {"AD": 0, "CN": 1}
@@ -21,16 +24,25 @@ class_names = ["AD", "CN"]
 OUTPUT_DIR = Path("outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-CHECKPOINT_PATH = OUTPUT_DIR / "basic_cnn.pth"
-METRICS_PATH = OUTPUT_DIR / "metrics.json"
-HISTORY_PATH = OUTPUT_DIR / "training_history.json"
+if MODEL_NAME == "BasicCNN":
+    CHECKPOINT_PATH = OUTPUT_DIR / "basic_cnn.pth"
+    METRICS_PATH = OUTPUT_DIR / "metrics.json"
+    HISTORY_PATH = OUTPUT_DIR / "training_history.json"
+else: # MODEL_NAME = ConvNeXt
+    CHECKPOINT_PATH = OUTPUT_DIR / "convnext.pth"
+    METRICS_PATH = OUTPUT_DIR / "convnext_metrics.json"
+    HISTORY_PATH = OUTPUT_DIR / "convnext_history.json"
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
-# baseline model
-model = modules.BasicCNN(num_classes=NUM_CLASSES).to(device)
+# initialise model
+if MODEL_NAME == "BasicCNN":
+    model = modules.BasicCNN(num_classes=NUM_CLASSES).to(device)
+else:
+    model = modules.ConvNeXt(num_classes=NUM_CLASSES).to(device)
+
 criterion = nn.CrossEntropyLoss()
 optimiser = optim.AdamW(
     model.parameters(),
@@ -292,7 +304,7 @@ print(f"Results directory: {OUTPUT_DIR.resolve()}")
 
 # save baseline model
 checkpoint = {
-    "model_name": "BasicCNN",
+    "model_name": MODEL_NAME,
     "model_state_dict": model.state_dict(),
     "optimizer_state_dict": optimiser.state_dict(),
     "num_classes": NUM_CLASSES,
@@ -312,7 +324,7 @@ torch.save(checkpoint, CHECKPOINT_PATH)
 print(f"\nModel checkpoint saved to: {CHECKPOINT_PATH}")
 
 metrics = {
-    "model_name": "BasicCNN",
+    "model_name": "MODEL_NAME",
     "device": str(device),
     "epochs": EPOCHS,
     "parameter_count": parameter_count,
