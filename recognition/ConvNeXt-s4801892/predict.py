@@ -129,6 +129,7 @@ if device.type == "cuda":
 
 # confusion matrix
 confusion = metrics.get("test_confusion_matrix")
+confusion = np.asarray(confusion, dtype=int)
 
 # other metrics
 per_class_metrics = {}
