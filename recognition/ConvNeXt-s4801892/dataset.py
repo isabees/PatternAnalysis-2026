@@ -45,10 +45,18 @@ test_images = [
     for f in (root / "test" / cls).glob("*.jpeg")
 ]
 
+train_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomRotation(degrees=10),
+    transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
+    transforms.ColorJitter(brightness=0.1, contrast=0.1),
+    transforms.ToTensor(),
+])
+
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-])
+])  
 
 class MRIDataset(Dataset):
     def __init__(self, images, transform=None):
@@ -69,7 +77,7 @@ class MRIDataset(Dataset):
         return image, torch.tensor(label, dtype=torch.long)
 
 train_loader = DataLoader(
-    MRIDataset(train_images, transform),
+    MRIDataset(train_images, train_transform),
     batch_size=32,
     shuffle=True,
 )
