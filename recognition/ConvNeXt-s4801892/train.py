@@ -14,9 +14,9 @@ import dataset
 MODEL_NAME = "BasicCNN"
 # MODEL_NAME = "ConvNeXt"
 
-EPOCHS = 30
+EPOCHS = 50
 LEARNING_RATE = 0.0001
-WEIGHT_DECAY = 0.01
+WEIGHT_DECAY = 0.03
 NUM_CLASSES = 2
 LABEL_CLASSES = {"AD": 0, "CN": 1}
 class_names = ["AD", "CN"]
@@ -43,7 +43,7 @@ if MODEL_NAME == "BasicCNN":
 else:
     model = modules.ConvNeXt(num_classes=NUM_CLASSES).to(device)
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 optimiser = optim.AdamW(
     model.parameters(),
     lr=LEARNING_RATE,
