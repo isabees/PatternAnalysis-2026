@@ -77,7 +77,7 @@ class ConvNeXtBlock(nn.Module):
 
 # ConvNeXt model
 class ConvNeXt(nn.Module):
-    def __init__(self, num_classes=2):
+    def __init__(self, num_classes=2, dropout_rate=0.4):
         super().__init__()
 
         self.stem = nn.Sequential(
@@ -115,7 +115,10 @@ class ConvNeXt(nn.Module):
             nn.AdaptiveAvgPool2d((1, 1)),
         )
 
-        self.classifier = nn.Linear(256, num_classes)
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(256, num_classes)
+        )
 
     def forward(self, x):
         x = self.stem(x)
