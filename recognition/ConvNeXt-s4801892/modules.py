@@ -41,7 +41,7 @@ class BasicCNN(nn.Module):
 
 
 class ConvNeXtBlock(nn.Module):
-    def __init__(self, channels, expansion=2):
+    def __init__(self, channels, expansion=4):
         super().__init__()
 
         self.block = nn.Sequential(
@@ -82,34 +82,39 @@ class ConvNeXt(nn.Module):
 
         self.stem = nn.Sequential(
             # input MRI image: 1 channel
-            nn.Conv2d(1, 32, kernel_size=4, stride=4),
+            nn.Conv2d(1, 32, kernel_size=4, stride=2, padding=1),
             nn.GroupNorm(1, 32),
         )
 
         self.features = nn.Sequential(
-            # stage 1: 32 channels
-            ConvNeXtBlock(32, expansion=2),
+            # stage 1: 32 channels, 2 blocks
+            ConvNeXtBlock(32, expansion=4),
+            ConvNeXtBlock(32, expansion=4),
 
             # downsample: 32 -> 64
             nn.Conv2d(32, 64, kernel_size=2, stride=2),
             nn.GroupNorm(1, 64),
 
-            # stage 2: 64 channels
-            ConvNeXtBlock(64, expansion=2),
+            # stage 2: 64 channels, 2 blocks
+            ConvNeXtBlock(64, expansion=4),
+            ConvNeXtBlock(64, expansion=4),
 
             # downsample: 64 -> 128
             nn.Conv2d(64, 128, kernel_size=2, stride=2),
             nn.GroupNorm(1, 128),
 
-            # stage 3: 128 channels
-            ConvNeXtBlock(128, expansion=2),
+            # stage 3: 128 channels, 3 blocks
+            ConvNeXtBlock(128, expansion=4),
+            ConvNeXtBlock(128, expansion=4),
+            ConvNeXtBlock(128, expansion=4),
 
             # downsample: 128 -> 256
             nn.Conv2d(128, 256, kernel_size=2, stride=2),
             nn.GroupNorm(1, 256),
 
-            # stage 4: 256 channels
-            ConvNeXtBlock(256, expansion=2),
+            # stage 4: 256 channels, 2 blocks
+            ConvNeXtBlock(256, expansion=4),
+            ConvNeXtBlock(256, expansion=4),
 
             # global average pooling
             nn.AdaptiveAvgPool2d((1, 1)),
