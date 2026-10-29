@@ -16,7 +16,7 @@ MODEL_NAME = "BasicCNN"
 
 EPOCHS = 30
 LEARNING_RATE = 0.0001
-WEIGHT_DECAY = 0.0001
+WEIGHT_DECAY = 0.01
 NUM_CLASSES = 2
 LABEL_CLASSES = {"AD": 0, "CN": 1}
 class_names = ["AD", "CN"]
@@ -151,6 +151,15 @@ history = {
 if device.type == "cuda":
     torch.cuda.reset_peak_memory_stats(device)
 
+
+patience = 4
+patience_counter = 0
+best_val_loss = float('inf')
+if MODEL_NAME == "BasicCNN":
+    best_model_path = "best_cnn.pth"
+else:
+    best_model_path = "best_convnext.pth"
+
 total_start = time.perf_counter()
 
 # training and validation
@@ -206,12 +215,27 @@ for epoch in range(EPOCHS):
         f"Val Time: {val_seconds:.2f}s"
     )
 
+    # early stopping check
+    current_val_loss = val_results['loss']
+    
+    if current_val_loss < best_val_loss:
+        best_val_loss = current_val_loss
+        patience_counter = 0
+        torch.save(model.state_dict(), best_model_path)
+    else:
+        patience_counter += 1
+        
+        if patience_counter >= patience:
+            break
+
 synchronise_cuda()
 training_seconds = time.perf_counter() - total_start
 
 # test evaluation
 synchronise_cuda()
 test_start = time.perf_counter()
+
+model.load_state_dict(torch.load(best_model_path)) # load best model in
 
 test_results = evaluate(
     model,
@@ -324,7 +348,7 @@ torch.save(checkpoint, CHECKPOINT_PATH)
 print(f"\nModel checkpoint saved to: {CHECKPOINT_PATH}")
 
 metrics = {
-    "model_name": "MODEL_NAME",
+    "model_name": MODEL_NAME,
     "device": str(device),
     "epochs": EPOCHS,
     "parameter_count": parameter_count,
