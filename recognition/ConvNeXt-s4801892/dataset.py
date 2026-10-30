@@ -51,11 +51,13 @@ train_transform = transforms.Compose([
     transforms.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.95, 1.05)),
     transforms.ColorJitter(brightness=0.1, contrast=0.1),
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.1156], std=[0.2229])
 ])
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.1156], std=[0.2229])
 ])  
 
 class MRIDataset(Dataset):
