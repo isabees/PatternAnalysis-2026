@@ -1,7 +1,14 @@
 # ConvNeXt for Alzheimer's Screening
-
-• A title, a description of the algorithm and the problem that it solves (approximately a paragraph), how it works in a paragraph, and a figure/visualisation.
 ## What is ConvNeXt?
+ConvNeXt is a modern Convolutional Neural Network (CNN) architecture introduced to bridge the performance and design gap between traditional CNNs and the newer transformers. While transformers dominate computer vision benchmarks due to advanced design choices, they often lack the efficiency, simplicity, and inductive biases of convolutional networks. ConvNeXt bridges this gap by proving that traditional ConvNets can be improved to match or exceed transformer performance while remaining simple and efficient.
+
+## How Does it Work?
+ConvNeXt is a highly optimised CNN that processes image data through a series of convolutional stages. It starts off with a stem that groups pixels into patches, passing them through feature blocks where inverted bottlenecks expand and contract channel dimensions to maintain representational power. To capture broader spatial context, ConvNeXt uses large 7x7 depthwise convolutions to isolate spatial filtering from channel mixing. It goes through multiple stages of blocks between downsampling, and integrates design choices such as replacing traditional batch normalisation with layer normalisation and using the GELU activation function, and removes excessive activation layers. This streamlined pipeline enables ConvNeXt to efficiently extract features and maintain a high spatial awaerness through standard convolution operations. See [the original paper](https://openaccess.thecvf.com/content/CVPR2022/papers/Liu_A_ConvNet_for_the_2020s_CVPR_2022_paper.pdf) for more details.
+
+<img width="2089" height="598" alt="image" src="https://github.com/user-attachments/assets/037cf03d-c7c0-466c-b0a1-80009d7c2bda" />
+
+The architecture of ConvNeXt (figure by [Lu et al.](https://xiahepublishing.com/m/2310-8819/JCTH-2025-00631))
+
 
 ## Feasibility Review
 ### 1. User Need, Scope & Acceptance Criteria
@@ -35,7 +42,7 @@ The ConvNeXt prototype will have the following architecture (based on the archit
 -  Stage 4 (256 channels): One ConvNeXtBlock module, followed by adaptive average pooling forcing spatial dimensions to 1x1 globally.
 -  Classifier: linear layer to output the classification logits.
 
-Using AdamW optimiser for both because of the consistent regularisation and better generalisation (lectures).
+Using AdamW optimiser for both models because of the consistent regularisation and better generalisation (lectures).
 
 The chosen difficulty band is hard. 
 
