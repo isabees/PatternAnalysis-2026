@@ -11,8 +11,10 @@ import torch.optim as optim
 import modules
 import dataset
 
-MODEL_NAME = "BasicCNN"
-# MODEL_NAME = "ConvNeXt"
+# configuration and hyperparameters
+
+# select model architecture to train: "BasicCNN" or "ConvNeXt"
+MODEL_NAME = "ConvNeXt"
 
 EPOCHS = 50
 LEARNING_RATE = 0.0001
@@ -21,9 +23,9 @@ NUM_CLASSES = 2
 LABEL_CLASSES = {"AD": 0, "CN": 1}
 class_names = ["AD", "CN"]
 
+# define file paths based on model architecture
 OUTPUT_DIR = Path("outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
 if MODEL_NAME == "BasicCNN":
     CHECKPOINT_PATH = OUTPUT_DIR / "basic_cnn.pth"
     METRICS_PATH = OUTPUT_DIR / "metrics.json"
@@ -37,19 +39,22 @@ device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
-# initialise model
+# initialise model, loss & optimiser
 if MODEL_NAME == "BasicCNN":
     model = modules.BasicCNN(num_classes=NUM_CLASSES).to(device)
 else:
     model = modules.ConvNeXt(num_classes=NUM_CLASSES).to(device)
 
-criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+class_weights = torch.tensor([0.8, 1.3], device=device)
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1, weight=class_weights)
 optimiser = optim.AdamW(
     model.parameters(),
     lr=LEARNING_RATE,
     weight_decay=WEIGHT_DECAY,
 )
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max=EPOCHS)
 
+# calculate model parameter statistics
 parameter_count = sum(p.numel() for p in model.parameters())
 trainable_parameter_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
@@ -59,6 +64,19 @@ print("Trainable parameters:", trainable_parameter_count)
 
 # training
 def train_one_epoch(model, loader, criterion, optimiser, device):
+    """
+    Trains the model for a single epoch over the training data loader.
+    
+    Args:
+        model: PyTorch model to train.
+        loader: Training DataLoader.
+        criterion: Loss function.
+        optimiser: Optimization algorithm.
+        device: Computing device (CPU/GPU).
+        
+    Returns:
+        tuple: (average_epoch_loss, epoch_accuracy)
+    """
     model.train()
 
     total_loss = 0.0
@@ -69,6 +87,7 @@ def train_one_epoch(model, loader, criterion, optimiser, device):
         images = images.to(device)
         labels = labels.to(device).long()
 
+        # clear existing gradients
         optimiser.zero_grad(set_to_none=True)
 
         outputs = model(images)
@@ -78,16 +97,30 @@ def train_one_epoch(model, loader, criterion, optimiser, device):
         optimiser.step()
 
         batch_size = labels.size(0)
-
         total_loss += loss.item() * batch_size
         correct += (outputs.argmax(dim=1) == labels).sum().item()
         total += batch_size
+
+    # step learning rate scheduler
+    scheduler.step()
 
     return total_loss / total, correct / total
 
 # evaluation
 def evaluate(model, loader, criterion, device):
-    """Evaluate loss, accuracy, predictions and probabilities."""
+    """
+    Evaluates the model on a given data loader (validation or test set).
+    
+    Args:
+        model: PyTorch model to evaluate.
+        loader: DataLoader for validation or testing.
+        criterion: Loss function.
+        device: Computing device.
+        
+    Returns:
+        dict: Contains loss, accuracy, ground-truth labels, predictions, 
+              probability distributions, and total sample count.
+    """
 
     model.eval()
 
@@ -99,6 +132,7 @@ def evaluate(model, loader, criterion, device):
     all_predictions = []
     all_probabilities = []
 
+    # disable gradient computation for efficiency
     with torch.no_grad():
         for images, labels in loader:
             images = images.to(device)
@@ -137,7 +171,7 @@ def synchronise_cuda():
         torch.cuda.synchronize(device)
 
 
-# metric stuff
+# training set-up and tracking variables
 history = {
     "train_loss": [],
     "val_loss": [],
@@ -151,8 +185,8 @@ history = {
 if device.type == "cuda":
     torch.cuda.reset_peak_memory_stats(device)
 
-
-patience = 4
+# early stopping config
+patience = 5
 patience_counter = 0
 best_val_loss = float('inf')
 if MODEL_NAME == "BasicCNN":
@@ -252,6 +286,7 @@ print(f"Test Loss: {test_results['loss']:.4f}")
 print(f"Test Accuracy: {test_results['accuracy']:.4f}")
 print(f"Test Runtime: {test_seconds:.2f} seconds")
 
+# compute confusion matrix & classification metrics
 y_true = test_results["labels"]
 y_pred = test_results["predictions"]
 probabilities = test_results["probabilities"]
@@ -326,7 +361,7 @@ print(f"Test loss: {test_results['loss']:.4f}")
 print(f"Test accuracy: {test_results['accuracy']:.4f}")
 print(f"Results directory: {OUTPUT_DIR.resolve()}")
 
-# save baseline model
+# save model
 checkpoint = {
     "model_name": MODEL_NAME,
     "model_state_dict": model.state_dict(),

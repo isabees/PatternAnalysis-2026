@@ -7,13 +7,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 
 import modules
 import dataset
 
-MODEL_NAME = "BasicCNN"
-# MODEL_NAME = "ConvNeXt"
+# configuration and file paths
+
+# select model architecture to train: "BasicCNN" or "ConvNeXt"
+MODEL_NAME = "ConvNeXt"
 
 OUTPUT_DIR = Path("outputs")
 
@@ -30,7 +31,7 @@ else: # MODEL_NAME = ConvNeXt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# load the saved baseline model
+# load the save model
 checkpoint = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=True)
 
 num_classes = checkpoint["num_classes"]
@@ -168,6 +169,7 @@ nll = float(-np.mean(np.log(true_class_probs)))
 
 # ECE (expected calibration error)
 def compute_ece(probs, labels, n_bins=10):
+    """Computes Expected Calibration Error (ECE) and reliability bin statistics."""
     preds = np.argmax(probs, axis=1)
     confs = np.max(probs, axis=1)
     accuracies = (preds == labels)
@@ -190,6 +192,7 @@ ece, reliability_bins = compute_ece(probabilities, true_labels)
 
 # AUROC and average precision (one-vs-rest)
 def compute_roc_pr(y_true_bin, y_score):
+    """Computes ROC and Precision-Recall curve coordinates, AUROC, and Average Precision."""
     sorted_idx = np.argsort(y_score)[::-1]
     y_true_sorted = y_true_bin[sorted_idx]
     y_score_sorted = y_score[sorted_idx]
@@ -235,7 +238,7 @@ for c, c_name in enumerate(class_names):
 macro_auroc = float(np.mean(list(auroc_dict.values())))
 macro_ap = float(np.mean(list(ap_dict.values())))
 
-# plots
+# generate plots
 # confusion matrix
 plt.figure(figsize=(5, 4))
 plt.imshow(confusion, cmap="Blues")
@@ -360,6 +363,8 @@ for idx, (t, p, conf, probs) in enumerate(zip(true_labels, predicted_labels, con
             "confidence": float(conf),
         })
 
+
+# export metrics
 failure_csv_path = OUTPUT_DIR / f"{MODEL_NAME.lower()}_failure_cases.csv"
 with open(failure_csv_path, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=["sample_index", "true_class", "predicted_class", "confidence"])

@@ -7,20 +7,15 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
+# root directory for ADNI dataset
 root = Path("/home/groups/comp3710/ADNI/AD_NC")
 
+# collect training images
 images = [
     (f, label, f.stem.split("_")[0])
     for label, cls in [(1, "AD"), (0, "NC")] # label: AD = 1, NC = 0
     for f in (root / "train" / cls).glob("*.jpeg")
 ]
-
-# print("Dataset root:", root.resolve())
-# print("Root exists:", root.exists())
-# print("Train AD exists:", (root / "train" / "AD").exists())
-# print("Train NC exists:", (root / "train" / "NC").exists())
-# print("AD JPEGs:", len(list((root / "train" / "AD").glob("*.jpeg"))))
-# print("NC JPEGs:", len(list((root / "train" / "NC").glob("*.jpeg"))))
 
 # split unique patients, stratified by diagnosis
 patients = list({(pid, label) for _, label, pid in images})
@@ -38,13 +33,14 @@ train_ids, val_ids = set(train_ids), set(val_ids)
 train_images = [(f, y) for f, y, pid in images if pid in train_ids]
 val_images = [(f, y) for f, y, pid in images if pid in val_ids]
 
-# Keep the original test set unchanged
+# keep the original test set unchanged
 test_images = [
     (f, label)
     for label, cls in [(1, "AD"), (0, "NC")]
     for f in (root / "test" / cls).glob("*.jpeg")
 ]
 
+# data augmentation & transformation pipelines
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.RandomRotation(degrees=10),
@@ -61,14 +57,34 @@ transform = transforms.Compose([
 ])  
 
 class MRIDataset(Dataset):
+    """
+    Custom PyTorch Dataset for loading and transforming 2D brain MRI slices.
+    """
     def __init__(self, images, transform=None):
+        """
+        Initialises the MRIDataset.
+        
+        Args:
+            images (list): List of tuples containing image paths and labels.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
         self.images = images
         self.transform = transform
 
     def __len__(self):
+        """Returns the total number of samples in the dataset."""
         return len(self.images)
 
     def __getitem__(self, idx):
+        """
+        Fetches and processes a single image and label by index.
+        
+        Args:
+            idx (int): Index of the sample to fetch.
+            
+        Returns:
+            tuple: (transformed_image_tensor, label_tensor)
+        """
         path, label = self.images[idx]
 
         image = Image.open(path).convert("L")
@@ -78,6 +94,8 @@ class MRIDataset(Dataset):
 
         return image, torch.tensor(label, dtype=torch.long)
 
+
+# data loader instantiations
 train_loader = DataLoader(
     MRIDataset(train_images, train_transform),
     batch_size=32,
@@ -95,40 +113,3 @@ test_loader = DataLoader(
     batch_size=32,
     shuffle=False,
 )
-
-images, labels = next(iter(train_loader))
-
-# print(images.shape)  # [32, 1, 224, 224]
-# print(labels.shape)  # [32]
-# print(labels[:5])    # 0 = NC, 1 = AD
-
-# verifying the data split (make sure no patient appears in multiple splits):
-# def patient_ids(data):
-#     return {path.stem.split("_")[0] for path, label in data}
-
-# train_ids = patient_ids(train_images)
-# val_ids = patient_ids(val_images)
-# test_ids = patient_ids(test_images)
-
-# assert not (train_ids & val_ids), "Leakage: train and validation!"
-# assert not (train_ids & test_ids), "Leakage: train and test!"
-# assert not (val_ids & test_ids), "Leakage: validation and test!"
-
-# print("No patient leakage detected.")
-
-# for split_name, data in [
-#     ("train", train_images),
-#     ("validation", val_images),
-#     ("test", test_images),
-# ]:
-#     for path, label in data:
-#         assert label in (0, 1), f"Invalid label: {path}"
-#         assert path.parent.name == ("AD" if label == 1 else "NC"), \
-#             f"Incorrect label: {path}"
-
-#         with Image.open(path) as img:
-#             img.verify()
-
-#     print(f"{split_name}: {len(data)} images verified.")
-
-# print("All checks passed!")
