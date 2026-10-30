@@ -73,31 +73,57 @@ Next planned experiment: establish whether ConvNeXt has a measurable improvement
 Workable fallback: simplify training by reducing batch size to 16 or 8, if calibration is poor, refer more cases for specialist review
 
 
+## Dependencies Required
+These are the dependencies required to reproduce the results:
+- Python (v3.11.16)
+- PyTorch (v2.14.0)
+- Torchvision (v0.29.0)
+- NumPy (v2.4.6)
+- Scikit-learn (v1.9.1)
+- Matplotlib (v3.11.2)
+- Pillow (v12.3.0)
 
-• Any dependencies required, including exact versions, and address reproducibility of results.
+#### Reproducibility of Results
+The results are reproducible if you have access to the ADNI dataset, and those files are split into the same test and training folders as the ones used in this report. Through the use of random_state=42 in the train/validation split, these results are reproducible.
+
+
+## Example Inputs, Outputs, and Visual Plots
+### Inputs
+Input data consists of 1 channel grey-scale 256x240 JPEG MRI slice images such as the following:
+
+<img width="256" height="240" alt="374536_95" src="https://github.com/user-attachments/assets/b37af1bd-925f-457c-8875-fc29b126e5e8" />
+
+### Outputs
+
+
+### Visual Plots
 
 
 
-• Example inputs, outputs, and visual plots of your algorithm.
-
-
-
+## Preprocessing of Data
 • Description of any specific pre-processing used, with references if any. Justify your training, validation, and testing splits of the data.
 
 
 
+
+
+## Investigation of the Open Research Dilemma
 • Investigation of the Open Research Dilemma:
 – Quantitative benchmarking of your chosen model against your implemented baseline model under identical evaluation splits.
 – Resource profiling table documenting computational efficiency (peak GPU VRAM, parameter count, and inference runtime/latency).
 – In-depth qualitative error autopsies analyzing 3–5 representative failure cases from the dataset (diagnosing root triggers and failure modes).
 – Actionable engineering recommendation and trade-off synthesis for your project manager.
 
-• The mandatory Artificial Intelligence Usage Disclosure subsection - documenting:
+
+
+## Artificial Intelligence Usage Disclosure
+• documenting:
 • Which AI tools were utilized (e.g., GitHub Copilot for auto-complete, ChatGPT/Claude for debugging syntax, Gemini for concept lookup).
 • What specific tasks AI assisted with (e.g., scaffolding data loading functions, refactoring plotting scripts).
 • How you audited, verified, and empirically tested the AI-suggested code
 ChatGPT was used for helping scaffold the data loading functions. I verified the accuracy by verifying that there was no data leakage (see screenshot below).
-![alt text](recognition/ConvNeXt-s4801892/images/verification-of-data.png)
+<img width="661" height="402" alt="image" src="https://github.com/user-attachments/assets/1c5156eb-aa1e-464e-9cd8-beac8a35cbc5" />
+
 
 
 Marking Criteria:
