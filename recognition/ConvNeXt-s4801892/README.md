@@ -97,8 +97,14 @@ Input data consists of 1 channel grey-scale 256x240 JPEG MRI slice images such a
 
 
 ### Visual Plots
+#### Training and Validation Accuracy for ConvNeXt
+<img width="2100" height="1200" alt="convnext_accuracy_curves" src="https://github.com/user-attachments/assets/734cbe84-d32d-49c7-9e59-e30183e8492a" />
 
+#### Confusion Matrix for ConvNeXt
+<img width="1500" height="1200" alt="convnext_confusion_matrix" src="https://github.com/user-attachments/assets/a99a7889-b95a-455b-bcc4-cc47c07cffc9" />
 
+#### Test Set Class Probability Distributions for ConvNeXt
+<img width="3000" height="1200" alt="convnext_probability_distributions" src="https://github.com/user-attachments/assets/0e6368d2-c556-4a57-8620-4f93877e2ebb" />
 
 ## Preprocessing of Data
 • Description of any specific pre-processing used, with references if any. Justify your training, validation, and testing splits of the data.
@@ -111,25 +117,46 @@ To prepare the ADNI MRI slices for the ConvNeXt model, the following data pre-pr
 I used the 70% training, 15% validation, and 15% testing split (ensuring that it was split patient-wise to avoid data leakage) because it strikes an optimal balance for deep learning pipelines in medical imaging. By allocating 70% of the data for training, it allows the ConvNeXt model to sufficiently learn complex structural biomarkers of cognitive decline across a diverse patient pool. 15% validation provides a suitably sized independent subset to monitor loss and implement early stopping to prevent overfitting. This leaves 15% for testing, which is a suitable size for a completely unseen and unbiased set to evaluate the model's generalistion.
 
 ## Investigation of the Open Research Dilemma
-• Investigation of the Open Research Dilemma:
-– Quantitative benchmarking of your chosen model against your implemented baseline model under identical evaluation splits.
-– Resource profiling table documenting computational efficiency (peak GPU VRAM, parameter count, and inference runtime/latency).
+The following table compares the benchmark CNN model performance against the ConvNeXt model under identical evaluation splits:
+||CNN baseline model|ConvNeXt|
+|---|---|---|
+|Test accuracy (%)|69.14|76.57|
+|Parameters|23650|1760226|
+|Time taken to train (s)|754.3|2335.6|
+|Macro F1|0.69|0.75|
+|AD precision|0.67|0.69|
+|AD recall|0.78|0.96|
+|CN precision|0.73|0.93|
+|CN recall|0.61|0.57|
+|AUROC|0.76|0.81|
+
+It can be seen that ConvNeXt performs better than the CNN baseline model. It does take much longer to train, however, that is expected as it is a more complex model. It still is over-predicting AD and classifying a large number of NC cases as AD, but overall, it performs much better than the baseline. 
+
+#### Resource Profiling Table
+||ConvNeXt|
+|---|---|
+|Peak GPU VRAM (MiB|2459|
+|Parameter count|1760226|
+|Inference latency (ms)|1.88|
+
+While being more computationally intensive than the baseline, it is still relatively efficient for a complex model.
+
+
 – In-depth qualitative error autopsies analyzing 3–5 representative failure cases from the dataset (diagnosing root triggers and failure modes).
+
+
 – Actionable engineering recommendation and trade-off synthesis for your project manager.
+
+
+The Confidence and Ambiguity Dilemma in Automated Triage: In clinical diagnosis (Alzheimer’s screening), models frequently achieve deceptively high aggregate test accuracy while concealing catastrophic overconfidence on borderline, ambiguous, or out-of-distribution cases. In safety-critical screening, a single uncalibrated false negative (e.g., misclassifying an early malignant melanoma as benign) or an unflagged ambiguous brain MRI is far more damaging than a routine false positive. 
+• Core Investigation: Does your chosen model architecture reliably quantify uncertainty on ambiguous boundary cases compared to a simple baseline? Does its predicted confidence score (or embedding metric distance) correlate with diagnostic correctness, or does the network remain stubbornly overconfident even when making incorrect predictions? 
+• Engineering Recommendation: Establish an empirical confidence threshold or reject-option rule that safely automates high-confidence cases while routing ambiguous cases to human specialists. Does the added architectural complexity and computational cost of your advanced model justify its operational advantage over the baseline?
+4. Failure Case Autopsy & Manager Recommendation: Inspect 3–5 representative failure cases (false positives and false negatives) from the dataset to diagnose failure triggers. Propose a calibrated operating threshold or decision rule to route low-confidence predictions to human experts, and deliver an actionable recommendation to your project manager.
 
 
 
 ## Artificial Intelligence Usage Disclosure
-• documenting:
-• Which AI tools were utilized (e.g., GitHub Copilot for auto-complete, ChatGPT/Claude for debugging syntax, Gemini for concept lookup).
-• What specific tasks AI assisted with (e.g., scaffolding data loading functions, refactoring plotting scripts).
-• How you audited, verified, and empirically tested the AI-suggested code
 ChatGPT was used for helping scaffold the data loading functions. I verified the accuracy by verifying that there was no data leakage (see screenshot below).
 <img width="661" height="402" alt="image" src="https://github.com/user-attachments/assets/1c5156eb-aa1e-464e-9cd8-beac8a35cbc5" />
-
-
-
-Marking Criteria:
-1. Description and explanation of the working principles of the algorithm implemented and the problem it solves (5 Marks).
-2. Description of usage and comments throughout scripts (3 Marks).
-3. Proper formatting using GitHub markdown (2 Marks).
+Gemini and ChatGPT were used for debugging syntax. I used my knowledge of what the code should look like to see if the suggested code made sense.
+Gemini was used to help write docstrings. I read them to make sure that they were accurate.
