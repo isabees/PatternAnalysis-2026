@@ -102,10 +102,13 @@ Input data consists of 1 channel grey-scale 256x240 JPEG MRI slice images such a
 
 ## Preprocessing of Data
 • Description of any specific pre-processing used, with references if any. Justify your training, validation, and testing splits of the data.
+To prepare the ADNI MRI slices for the ConvNeXt model, the following data pre-processing and augmentation pipeline was used: 
+- Standardise the spatial dimensions of the MRI slices to 224x224 to match the input size expected by standard ConvNeXt architectures
+- Data Augmentation (RandomRotation, RandomAffine, ColorJitter) to introduce minor geometric variations (slight rotations and translations up to 5%) and photometric adjustments (brightness and contrast) to simulate minor differences in head positioning, scanner calibration, and slice angles, helping prevent overfitting and improving model robustness (note: standard medical imaging classification pipelines commonly use these to adapt convolutional networks, as seen in the paper by [Basheera et al.](https://alz-journals.onlinelibrary.wiley.com/doi/10.1016/j.trci.2019.10.001) which utilises ADNI pre-processed subsets)
+- Normalise(mean=0.1156, std=0.2229): Centres pixel distribution using training data mean and standard deviation to stabilise gradient descent and speed up convergence.
 
 
-
-
+I used the 70% training, 15% validation, and 15% testing split (ensuring that it was split patient-wise to avoid data leakage) because it strikes an optimal balance for deep learning pipelines in medical imaging. By allocating 70% of the data for training, it allows the ConvNeXt model to sufficiently learn complex structural biomarkers of cognitive decline across a diverse patient pool. 15% validation provides a suitably sized independent subset to monitor loss and implement early stopping to prevent overfitting. This leaves 15% for testing, which is a suitable size for a completely unseen and unbiased set to evaluate the model's generalistion.
 
 ## Investigation of the Open Research Dilemma
 • Investigation of the Open Research Dilemma:
